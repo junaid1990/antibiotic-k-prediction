@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>K Prediction App</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 15px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h2 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+        }
+        .category {
+            margin-bottom: 12px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 12px;
+        }
+        .category h3 {
+            color: #28a745;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .form-group {
+            flex: 1;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 3px;
+            font-weight: bold;
+            color: #555;
+            font-size: 0.95em;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select { /* Added styling for select elements */
+            width: calc(100% - 8px);
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.95em;
+            color: #333; /* Ensure input text is visible */
+        }
+        .form-group input::placeholder {
+            color: #999; /* Style for the placeholder text */
+            font-style: italic;
+        }
+        .form-group input[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .form-group input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        .error-message {
+            color: darkred;
+            font-weight: bold;
+            margin-top: 8px;
+            font-size: 0.95em;
+        }
+        .prediction-results {
+            margin-top: 15px;
+            padding: 12px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            font-size: 0.95em;
+        }
+        .prediction-results h3 {
+            color: #17a2b8;
+            margin-top: 0;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+        .evaluation-metrics h4 {
+            color: #fd7e14;
+            margin-top: 8px;
+            font-size: 1em;
+        }
+        .preprocessing-steps h4 {
+            color: #6c757d;
+            margin-top: 10px;
+            font-size: 1em;
+        }
+        .preprocessing-steps h5 {
+            margin-top: 8px;
+            color: #343a40;
+            font-size: 0.95em;
+        }
+        .preprocessing-steps pre {
+            background-color: #f8f9fa;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 0.85em;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+    </style>
+</head>
+<body>
+    <h2>✨ Predict 'k' Value ✨</h2>
+
+    <div class="container">
+        <form method="post">
+            <div class="category">
+                <h3>Catalyst Properties</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="Dope">Dope (No/Yes):</label>
+                        <select name="Dope" required>
+                            <option value="" disabled selected>Choose Doping</option>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="GS">GS (Yes/No):</label>
+                        <select name="GS" required>
+                            <option value="" disabled selected>Choose Graphitic Structure</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="SSA">SSA:</label>
+                        <input type="number" step="any" name="SSA" placeholder="Specific surface area" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="APS">APS:</label>
+                        <input type="number" step="any" name="APS" placeholder="Average pore size" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="TPV">TPV:</label>
+                        <input type="number" step="any" name="TPV" placeholder="Total pore volume" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="IdIg">IdIg:</label>
+                        <input type="number" step="any" name="IdIg" placeholder="(Raman spectra ID/IG)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="PT">PT:</label>
+                        <input type="number" name="PT" placeholder="Pyrolysis temperature" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="PFRs">PFRs (High/Low/Med/Dim/No/NaN/Value):</label>
+                        <select name="PFRs" id="PFRs" required onchange="togglePFRsInput()">
+                            <option value="" disabled selected>Choose Persistent Free Radicals</option>
+                            <option value="High">High</option>
+                            <option value="Low">Low</option>
+                            <option value="Med">Med</option>
+                            <option value="Dim">Dim</option>
+                            <option value="No">No</option>
+                            <option value="NaN">NaN</option>
+                            <option value="Value">Value</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="customPFRs" style="display: none;">
+                        <label for="PFRs_value">Enter any PFR value:</label>
+                        <input type="number" step="any" name="PFRs_value" id="PFRs_value" placeholder="Enter a number">
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="category">
+                <h3>Elemental and Chemical Composition</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="C">C:</label>
+                        <input type="number" step="any" name="C" placeholder="Carbon content (%)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="H">H:</label>
+                        <input type="number" step="any" name="H" placeholder="Hydrogen content (%)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="O">O:</label>
+                        <input type="number" step="any" name="O" placeholder="Oxygen content (%)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="N">N:</label>
+                        <input type="number" step="any" name="N" placeholder="Nitrogen content (%)" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="pH">pH:</label>
+                        <input type="number" step="any" name="pH" placeholder="pH value" required>
+                    </div>
+                    <div class="form-group" style="flex: 3;">
+                        </div>
+                </div>
+            </div>
+
+            <div class="category">
+                <h3>Reaction Conditions</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="Oxi_C">Coxi:</label>
+                        <input type="number" step="any" name="Oxi_C" placeholder="Oxidant concentration" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="Bc_C">Cbio:</label>
+                        <input type="number" step="any" name="Bc_C" placeholder="Biochar concentration" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="Pol_C">Cpol:</label>
+                        <input type="number" step="any" name="Pol_C" placeholder="Pollutant concentration" required>
+                    </div>
+                    <div class="form-group">
+                        </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="actual_k">Actual k (optional):</label>
+                <input type="number" step="any" name="actual_k" placeholder="Optional actual k value">
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Predict">
+            </div>
+        </form>
+
+        {% if error_message %}
+            <p class="error-message">{{ error_message }}</p>
+        {% endif %}
+    </div>
+
+    {% if prediction is not none %}
+        <div class="container prediction-results">
+            <h3>🔮 Predicted 'k' Value: {{ prediction | round(4) }}</h3>
+
+            {% if actual_value is not none and actual_value != "Invalid input" %}
+                <div class="evaluation-metrics">
+                    <h4>📊 Evaluation Metrics</h4>
+                    <p><strong>Actual k:</strong> {{ actual_value | round(4) }}</p>
+                    <p><strong>Absolute Error:</strong> {{ absolute_error | round(4) }}</p>
+                    <p><strong>Squared Error:</strong> {{ squared_error | round(4) }}</p>
+                    {% if percentage_error is not none %}
+                        <p><strong>Percentage Error:</strong> {{ percentage_error | round(2) }}%</p>
+                    {% endif %}
+                </div>
+            {% elif actual_value == "Invalid input" %}
+                <p class="error">⚠️ Invalid actual 'k' value entered!</p>
+            {% endif %}
+        </div>
+
+        <div class="container preprocessing-steps">
+            <h4>⚙️ Preprocessing Steps</h4>
+
+            <h5>1. Raw Input Data:</h5>
+            {% if raw_input is not none %}
+            <pre>{{ raw_input.to_html(index=False) | safe }}</pre>
+            {% endif %}
+
+            <h5>2. After Label Encoding ('Dope', 'GS'):</h5>
+            {% if encoded_input is not none %}
+            <pre>{{ encoded_input.to_html(index=False) | safe }}</pre>
+            {% endif %}
+
+            <h5>3. After Target Encoding ('PFRs'):</h5>
+            {% if encoded_input is not none %}
+            <pre>{{ encoded_input.to_html(index=False) | safe }}</pre>
+            {% endif %}
+
+            <h5>4. After Yeo-Johnson Transformation:</h5>
+            {% if transformed_input is not none %}
+            <pre>{{ transformed_input.to_html(index=False) | safe }}</pre>
+            {% endif %}
+
+            <h5>5. After MinMax Scaling:</h5>
+            {% if scaled_input is not none %}
+            <pre>{{ scaled_input.to_html(index=False) | safe }}</pre>
+            {% endif %}
+        </div>
+    {% endif %}
+    <script>
+        function togglePFRsInput() {
+            const selected = document.getElementById("PFRs").value;
+            const customDiv = document.getElementById("customPFRs");
+            if (selected === "Value") {
+                customDiv.style.display = "block";
+            } else {
+                customDiv.style.display = "none";
+                document.getElementById("PFRs_value").value = "";
+            }
+        }
+    </script>
+</body>
+</html>
